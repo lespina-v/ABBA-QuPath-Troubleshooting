@@ -1,3 +1,7 @@
+#Use in the QuPath script editor to batch delete annotations in the "Censor" class. Updates
+#area measurements and positives per area data.
+
+
 // --- BATCH CENSOR, AREA CONVERSION, & POSITIVES PER mm² ---
 import qupath.lib.roi.RoiTools
 
