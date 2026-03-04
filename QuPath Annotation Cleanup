@@ -1,0 +1,69 @@
+## deletes all qupath annotations we're not interested in, so it's easier to find the
+## ones we want during censoring - runs in the Qupath script editor
+
+// Define names to KEEP (under "root")
+def keepNames = [
+    "Primary somatosensory area, barrel field",
+    "Anterior cingulate area",
+    "Prelimbic area",
+    "Infralimbic area",
+    "Agranular insular area",
+    "Field CA1",
+    "Field CA2",
+    "Field CA3",
+    "Dentate gyrus",
+    "Claustrum",
+    "Basolateral amygdalar nucleus",
+    "Caudoputamen",
+    "Nucleus accumbens",
+    "Central amygdalar nucleus",
+    "Globus pallidus, external segment",
+    "Globus pallidus, internal segment",
+    "Pallidum, ventral region",
+    "Bed nuclei of the stria terminalis",
+    "Paraventricular nucleus of the thalamus",
+    "Medial habenula",
+    "Lateral habenula",
+    "Hypothalamus",
+    "Lateral hypothalamic area",
+    "Ventral tegmental area",
+    "Periaqueductal gray"
+]
+
+// Find all annotations
+def annotations = getAnnotationObjects()
+
+// Collect objects to keep
+def toKeep = new HashSet()
+
+// 1. Add desired annotations and their parents (traverse up to "root")
+annotations.each { anno ->
+    if (keepNames.contains(anno.getName())) {
+        def current = anno
+        while (current != null) {
+            toKeep.add(current)
+            current = current.getParent()
+        }
+    }
+}
+
+// 2. Add "Annotation (Rectangle)" and all its descendants
+annotations.each { anno ->
+    if (anno.getName() == "Annotation (Rectangle)") {
+        def stack = [anno]
+        while (!stack.isEmpty()) {
+            def current = stack.pop()
+            toKeep.add(current)
+            stack.addAll(current.getChildObjects())
+        }
+    }
+}
+
+// 3. Delete everything else
+annotations.each { anno ->
+    if (!toKeep.contains(anno)) {
+        removeObject(anno, true)
+    }
+}
+
+print "Cleanup complete. Remaining annotations: " + toKeep.size()
