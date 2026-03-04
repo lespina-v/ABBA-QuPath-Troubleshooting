@@ -1,0 +1,68 @@
+#Creates a Regions List tab, and highlights the ROIs in all the file tabs at the same
+# time - run this in Apps Script so you can apply it to all your Google Sheets
+
+function setupRegionsListAndFormatting() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+
+  const regions = [
+    "Primary somatosensory area, barrel field",
+    "Anterior cingulate area",
+    "Prelimbic area",
+    "Infralimbic area",
+    "Agranular insular area",
+    "Field CA1",
+    "Field CA2",
+    "Field CA3",
+    "Dentate gyrus",
+    "Claustrum",
+    "Basolateral amygdalar nucleus",
+    "Caudoputamen",
+    "Nucleus accumbens",
+    "Central amygdalar nucleus",
+    "Globus pallidus, external segment",
+    "Globus pallidus, internal segment",
+    "Pallidum ventral region",
+    "Bed nuclei of the stria terminalis",
+    "Paraventricular nucleus of the thalamus",
+    "Medial habenula",
+    "Lateral habenula",
+    "Hypothalamus",
+    "Lateral hypothalamic area",
+    "Ventral tegmental area",
+    "Periaqueductal gray"
+  ];
+
+  const regionListSheetName = "RegionsList";
+
+  // Create or clear the RegionsList sheet
+  let regionSheet = ss.getSheetByName(regionListSheetName);
+  if (!regionSheet) {
+    regionSheet = ss.insertSheet(regionListSheetName);
+  } else {
+    regionSheet.clear();
+  }
+
+  // Write regions into column A
+  regionSheet.getRange(1, 1, regions.length, 1).setValues(regions.map(r => [r]));
+
+  // Apply formatting to all other sheets
+  const sheets = ss.getSheets();
+  const formatColor = "#d9ead3";  // light green
+  const regionRange = `${regionListSheetName}!A:A`;
+
+  for (let sheet of sheets) {
+    const sheetName = sheet.getName();
+    if (sheetName === regionListSheetName) continue;
+
+    const lastRow = sheet.getMaxRows();
+    const lastCol = sheet.getMaxColumns();
+
+    const range = sheet.getRange(2, 1, lastRow - 1, lastCol); // A2:end
+    const rule = SpreadsheetApp.newConditionalFormatRule()
+      .whenFormulaSatisfied(`=ISNUMBER(MATCH($B2, INDIRECT("${regionRange}"), 0))`)
+      .setBackground(formatColor)
+      .setRanges([range])
+      .build();
+
+    const rules = sheet.getConditionalFormatRules();
+    rules.push(rule);
